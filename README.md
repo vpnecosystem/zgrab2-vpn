@@ -161,8 +161,8 @@ The SSTP module performs a TLS handshake, sends out an SSTP_DUPLEX_POST HTTP req
 The TCP module can be used to establish a TCP connection over which a specified probe will be sent to the target. The module includes features for an easier support of OpenVPN and PPTP probes. The default port is 443 and might have to be specified depending on the protocol (e.g. 1723 for PPTP). The following flags can be used in combination with the TCP module:
 
  * `--hex`: Store response in hex value.
- * `--keymethod`: Specifies OpenVPN key method. Can be eith 1 or 2.
- * `--protocol`: Specifies which VPN protocol to scan for. Allows us to omit a probe.
+ * `--keymethod`: Specifies OpenVPN key method. This can be eith 1 or 2.
+ * `--protocol`: Specifies which VPN protocol to scan for. Allows us to omit a probe. This can be either *openvpn* or *pptp*.
  * `--hmac`: Specify this flag to include HMAC, packet ID and timestamp in an OpenVPN request.
  * `--probefile`: File which contains a custom probe to be sent over the TCP connection.
 
