@@ -23,12 +23,13 @@ type Flags struct {
 	zgrab2.TLSFlags
 
 	Protocol  string `long:"protocol" default:"\\n" description:"Send an initiation request of the VPN protocol specified here." `
-	ProbeFile string `long:"probe-file" description:"Read probe from file as byte array (hex). Mutually exclusive with --probe"`
+	ProbeFile string `long:"probe-file" description:"Read probe from file as byte array (hex). Mutually exclusive with --protocol"`
 	MaxTries  int    `long:"max-tries" default:"1" description:"Number of tries for timeouts and connection errors before giving up."`
 	Hex       bool   `long:"hex" description:"Store banner value in hex. "`
 	File      string `long:"file" default:"" description:"file to write responses to" `
 	HMAC      bool   `long:"hmac" description:"Specify if HMAC should be used in OpenVPN request"`
 	KeyMethod int    `long:"keymethod" default:"2" description:"Specify which KeyMethod to use for OpenVPN"`
+	SessionID string `long:"session-id" default:"1a2b3c4d1a2b3c4d" description:"Session ID to use for OpenVPN request"`
 }
 
 // Module is an implementation of the zgrab2.Module interface.
@@ -64,7 +65,7 @@ func (module *Module) Description() string {
 // Validate performs any needed validation on the arguments
 func (flags *Flags) Validate(args []string) error {
 	if flags.Protocol != "\\n" && flags.ProbeFile != "" {
-		log.Fatal("Cannot set both --probe and --probe-file")
+		log.Fatal("Cannot set both --protocol and --probe-file")
 		return zgrab2.ErrInvalidArguments
 	}
 	return nil
@@ -122,16 +123,13 @@ func (scanner *Scanner) Init(flags zgrab2.ScanFlags) error {
 			if strProtocol == "openvpn" {
 				length := ""
 
-				//generate session ID
-				//the ID is static in order to identify and verify incoming responses
-				session := "1a2b3c4d1a2b3c4d"
+				//get session ID
+				session := scanner.config.SessionID
 
 				//generate opcode
 				if scanner.config.KeyMethod == 1 {
 					opcode = "08"
-				}
-
-				if scanner.config.KeyMethod == 2 {
+				} else if scanner.config.KeyMethod == 2 {
 					opcode = "38"
 				}
 
@@ -139,8 +137,7 @@ func (scanner *Scanner) Init(flags zgrab2.ScanFlags) error {
 				if !scanner.config.HMAC {
 					length = "000e"
 					strProbe = length + opcode + session + "0000000000"
-				}
-				if f.HMAC { //hmac generation
+				} else if f.HMAC { //hmac generation
 					length = "002a"
 					hmac := hmac.New(sha1.New, []byte("secret"))
 					hmac.Write([]byte(length + opcode + session))
@@ -166,7 +163,6 @@ func (scanner *Scanner) Init(flags zgrab2.ScanFlags) error {
 // handshake log is returned (along with any other TLS-related logs, such as
 // heartbleed, if enabled).
 func (scanner *Scanner) Scan(target zgrab2.ScanTarget) (zgrab2.ScanStatus, interface{}, error) {
-	try := 0
 	var (
 		conn    net.Conn
 		err     error
@@ -174,7 +170,7 @@ func (scanner *Scanner) Scan(target zgrab2.ScanTarget) (zgrab2.ScanStatus, inter
 	)
 
 	//try to open connection for specified amount of tries
-	for try < scanner.config.MaxTries {
+	for try := 0; try < scanner.config.MaxTries; try++ {
 		try++
 		conn, err = target.Open(&scanner.config.BaseFlags)
 		if err != nil {
@@ -192,8 +188,7 @@ func (scanner *Scanner) Scan(target zgrab2.ScanTarget) (zgrab2.ScanStatus, inter
 
 	//send probe to open connection and check for response
 	var ret []byte
-	try = 0
-	for try < scanner.config.MaxTries {
+	for try := 0; try < scanner.config.MaxTries; try++ {
 		try++
 		_, err = conn.Write(scanner.probe)
 		ret, readerr = zgrab2.ReadAvailable(conn)

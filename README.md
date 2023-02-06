@@ -162,9 +162,10 @@ The TCP module can be used to establish a TCP connection over which a specified 
 
  * `--hex`: Store response in hex value.
  * `--keymethod`: Specifies OpenVPN key method. This can be eith 1 or 2.
- * `--protocol`: Specifies which VPN protocol to scan for. Allows us to omit a probe. This can be either *openvpn* or *pptp*.
+ * `--protocol`: Specifies which VPN protocol to scan for. Allows us to omit a probe. This can be either *`openvpn`* or *`pptp`*.
  * `--hmac`: Specify this flag to include HMAC, packet ID and timestamp in an OpenVPN request.
  * `--probefile`: File which contains a custom probe to be sent over the TCP connection.
+ * `--session-id`: 8B session ID to use for OpenVPN request. The session ID can be used to identify and verify responses. The default ID is `1a2b3c4d1a2b3c4d`.
 
 ## License
 ZGrab2.0 is licensed under Apache 2.0 and ISC. For more information, see the LICENSE file.

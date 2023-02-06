@@ -133,13 +133,15 @@ func (s *TLSScanner) Scan(t zgrab2.ScanTarget) (zgrab2.ScanStatus, interface{}, 
 
 	//establish TLS connection on top of tcp net.Conn object
 	conn := tls.Client(tcp_conn, cfg)
-	conn.SetDeadline(time.Now().Add(time.Duration(s.config.Timeout) * time.Second))
-
-	err = conn.Handshake()
 
 	if conn != nil {
 		defer conn.Close()
 	}
+
+	conn.SetDeadline(time.Now().Add(time.Duration(s.config.Timeout) * time.Second))
+
+	err = conn.Handshake()
+
 	if err != nil {
 		return zgrab2.TryGetScanStatus(err), nil, err
 	}
@@ -176,36 +178,21 @@ func (s *TLSScanner) Scan(t zgrab2.ScanTarget) (zgrab2.ScanStatus, interface{}, 
 	for i, elem := range splits {
 		if i == 0 { //first element is the status message
 			status = elem
-			continue
-		}
-		if strings.Contains(elem, "Content-Length:") { //parse content length
+		} else if strings.Contains(elem, "Content-Length:") { //parse content length
 			c_length = elem
-			continue
-		}
-		if strings.Contains(elem, "Content-Type:") { //parse content type
+		} else if strings.Contains(elem, "Content-Type:") { //parse content type
 			c_type = elem
-			continue
-		}
-		if strings.Contains(elem, "Date:") { //skip date since zgrab logs the time anyway
-			continue
-		}
-		if strings.Contains(elem, "Host:") { //skip host
-			continue
-		}
-		if strings.Contains(elem, "Server:") { //parse server
+		} else if strings.Contains(elem, "Date:") { //skip date since zgrab logs the time anyway
+		} else if strings.Contains(elem, "Host:") { //skip host
+		} else if strings.Contains(elem, "Server:") { //parse server
 			server = elem
-			continue
-		}
-		if i == len(splits)-1 { //last element should be message body or empty
+		} else if i == len(splits)-1 { //last element should be message body or empty
 			if elem != "" {
 				if status == "HTTP/1.1 200 OK" {
 					body = elem
-					continue
 				}
 			}
-		}
-		//nothing matches, append to misc string and add line breaks again
-		if elem != "" {
+		} else if elem != "" { //nothing matches, append to misc string and add line breaks again
 			if status == "HTTP/1.1 200 OK" {
 				misc = misc + elem + "\r\n"
 			}
@@ -216,7 +203,7 @@ func (s *TLSScanner) Scan(t zgrab2.ScanTarget) (zgrab2.ScanStatus, interface{}, 
 	return zgrab2.SCAN_SUCCESS, &results, nil
 }
 
-// RegisterModule is called by modules/tcp.go to register this module with the
+// RegisterModule is called by modules/sstp.go to register this module with the
 // zgrab2 framework.
 func RegisterModule() {
 	var module TLSModule
