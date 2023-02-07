@@ -20,10 +20,9 @@ import (
 
 type Flags struct {
 	zgrab2.BaseFlags
-	zgrab2.TLSFlags
 
-	Protocol  string `long:"protocol" default:"\\n" description:"Send an initiation request of the VPN protocol specified here." `
-	ProbeFile string `long:"probe-file" description:"Read probe from file as byte array (hex). Mutually exclusive with --protocol"`
+	Protocol  string `long:"protocol" default:"\\n" description:"Send an initiation request of the VPN protocol specified here. This can be either 'pptp' or 'openvpn'" `
+	ProbeFile string `long:"probe-file" description:"Read probe from file as hex stream and convert to byte array. Mutually exclusive with --protocol."`
 	MaxTries  int    `long:"max-tries" default:"1" description:"Number of tries for timeouts and connection errors before giving up."`
 	Hex       bool   `long:"hex" description:"Store banner value in hex. "`
 	File      string `long:"file" default:"" description:"file to write responses to" `
@@ -99,14 +98,17 @@ func (scanner *Scanner) InitPerSender(senderID int) error {
 // Init initializes the Scanner with the command-line flags.
 func (scanner *Scanner) Init(flags zgrab2.ScanFlags) error {
 	var err error
+	var bytes []byte
 	f, _ := flags.(*Flags)
 	scanner.config = f
 	if len(f.ProbeFile) != 0 {
-		scanner.probe, err = ioutil.ReadFile(f.ProbeFile)
+		bytes, err = ioutil.ReadFile(f.ProbeFile)
 		if err != nil {
 			log.Fatal("Failed to open probe file")
 			return zgrab2.ErrInvalidArguments
 		}
+		string_probe := string(bytes)
+		scanner.probe, _ = hex.DecodeString(string_probe)
 	} else {
 		if len(scanner.probe) == 0 {
 			strProtocol, err := strconv.Unquote(fmt.Sprintf(`"%s"`, scanner.config.Protocol))
