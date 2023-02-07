@@ -21,7 +21,7 @@ import (
 type Flags struct {
 	zgrab2.BaseFlags
 
-	Protocol  string `long:"protocol" default:"\\n" description:"Send an initiation request of the VPN protocol specified here. This can be either 'pptp' or 'openvpn'" `
+	Protocol  string `long:"protocol" default:"\\n" description:"Send an initiation request of the VPN protocol specified here. This can be either 'pptp' or 'openvpn'. Mutually exclusive with --probe-file." `
 	ProbeFile string `long:"probe-file" description:"Read probe from file as hex stream and convert to byte array. Mutually exclusive with --protocol."`
 	MaxTries  int    `long:"max-tries" default:"1" description:"Number of tries for timeouts and connection errors before giving up."`
 	Hex       bool   `long:"hex" description:"Store banner value in hex. "`
